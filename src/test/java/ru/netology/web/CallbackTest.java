@@ -79,7 +79,7 @@ class CallbackTest {
     @Test
     void shouldNotSendFormWithEightInNumberPhone() {
         driver.get("http://localhost:9999");
-        WebElement formElement = driver.findElement(By.cssSelector("form"));
+        WebElement formElement = driver.findElement(By.cssSelector("fform"));
         List<WebElement> inputs = formElement.findElements(By.cssSelector("input"));
         inputs.get(0).sendKeys("Иванов Иван");
         inputs.get(1).sendKeys("89000000000");
