@@ -29,8 +29,10 @@ class CallbackTest {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--no-sandbox");
-        options.addArguments("--headless");
+//        options.addArguments("--headless");
         driver = new ChromeDriver(options);
+
+        driver.get("http://localhost:9999");
     }
 
     @AfterEach
@@ -41,12 +43,9 @@ class CallbackTest {
 
     @Test
     void shouldSendForm() {
-        driver.get("http://localhost:9999");
 
-        WebElement formElement = driver.findElement(By.cssSelector("form"));
-        List<WebElement> inputs = formElement.findElements(By.cssSelector("input"));
-        inputs.get(0).sendKeys("Иванов Иван");
-        inputs.get(1).sendKeys("+79000000000");
+        driver.findElement(By.cssSelector("[data-test-id='name'] input")).sendKeys("Иванов Иван");
+        driver.findElement(By.cssSelector("[data-test-id='phone'] input")).sendKeys("+79000000000");
         driver.findElement(By.cssSelector("[data-test-id='agreement']")).click();
         driver.findElement(By.cssSelector("button")).click();
         WebElement resultElement = driver.findElement(By.cssSelector("[data-test-id='order-success']"));
@@ -56,35 +55,66 @@ class CallbackTest {
 
     @Test
     void shouldSendFormWithDoubleName() {
-        driver.get("http://localhost:9999");
-        WebElement formElement = driver.findElement(By.cssSelector("form"));
-        List<WebElement> inputs = formElement.findElements(By.cssSelector("input"));
-        inputs.get(0).sendKeys("Иванова Анна-Мария");
-        inputs.get(1).sendKeys("+79000000000");
+
+        driver.findElement(By.cssSelector("[data-test-id='name'] input")).sendKeys("Иван Петров-Иванов");
+        driver.findElement(By.cssSelector("[data-test-id='phone'] input")).sendKeys("+79000000000");
         driver.findElement(By.cssSelector("[data-test-id='agreement']")).click();
         driver.findElement(By.cssSelector("button")).click();
+        WebElement resultElement = driver.findElement(By.cssSelector("[data-test-id='order-success']"));
+        assertTrue(resultElement.isDisplayed());
+        assertEquals("Ваша заявка успешно отправлена! Наш менеджер свяжется с вами в ближайшее время.", resultElement.getText().trim());
+    }
+
+    @Test
+    void shouldNotSendFormWithoutCheckbox() {
+
+        driver.findElement(By.cssSelector("[data-test-id='name'] input")).sendKeys("Иван Иванов");
+        driver.findElement(By.cssSelector("[data-test-id='phone'] input")).sendKeys("+79000000000");
+        driver.findElement(By.cssSelector("button")).click();
+        WebElement resultElement = driver.findElement(By.cssSelector("[data-test-id='agreement'].input_invalid .checkbox__text"));
+        assertEquals("Я соглашаюсь с условиями обработки и использования моих персональных данных и разрешаю сделать запрос в бюро кредитных историй", resultElement.getText().trim());
     }
 
     @Test
     void shouldNotSendFormWithEnglishLanguage() {
-        driver.get("http://localhost:9999");
-        WebElement formElement = driver.findElement(By.cssSelector("form"));
-        List<WebElement> inputs = formElement.findElements(By.cssSelector("input"));
-        inputs.get(0).sendKeys("Ivanov Ivan");
-        inputs.get(1).sendKeys("+79000000000");
+        driver.findElement(By.cssSelector("[data-test-id='name'] input")).sendKeys("Ivanov Ivan");
+        driver.findElement(By.cssSelector("[data-test-id='phone'] input")).sendKeys("+79000000000");
         driver.findElement(By.cssSelector("[data-test-id='agreement']")).click();
         driver.findElement(By.cssSelector("button")).click();
+        WebElement resultElement = driver.findElement(By.cssSelector("[data-test-id='name'] .input__inner .input__sub "));
+        assertEquals("Имя и Фамилия указаные неверно. Допустимы только русские буквы, пробелы и дефисы.", resultElement.getText().trim());
+    }
+
+    @Test
+    void shouldNotSendFormWithoutName() {
+        driver.findElement(By.cssSelector("[data-test-id='name'] input")).sendKeys("");
+        driver.findElement(By.cssSelector("[data-test-id='phone'] input")).sendKeys("+79000000000");
+        driver.findElement(By.cssSelector("[data-test-id='agreement']")).click();
+        driver.findElement(By.cssSelector("button")).click();
+        WebElement resultElement = driver.findElement(By.cssSelector("[data-test-id='name'] .input__inner .input__sub "));
+        assertEquals("Поле обязательно для заполнения", resultElement.getText().trim());
     }
 
     @Test
     void shouldNotSendFormWithEightInNumberPhone() {
-        driver.get("http://localhost:9999");
-        WebElement formElement = driver.findElement(By.cssSelector("form"));
-        List<WebElement> inputs = formElement.findElements(By.cssSelector("input"));
-        inputs.get(0).sendKeys("Иванов Иван");
-        inputs.get(1).sendKeys("89000000000");
+
+        driver.findElement(By.cssSelector("[data-test-id='name'] input")).sendKeys("Иванов Иван");
+        driver.findElement(By.cssSelector("[data-test-id='phone'] input")).sendKeys("89000000000");
         driver.findElement(By.cssSelector("[data-test-id='agreement']")).click();
         driver.findElement(By.cssSelector("button")).click();
+        WebElement resultElement = driver.findElement(By.cssSelector("[data-test-id='phone'] .input__inner .input__sub "));
+        assertEquals("Телефон указан неверно. Должно быть 11 цифр, например, +79012345678.", resultElement.getText().trim());
+    }
+
+    @Test
+    void shouldNotSendFormWithoutPhone() {
+
+        driver.findElement(By.cssSelector("[data-test-id='name'] input")).sendKeys("Иванов Иван");
+        driver.findElement(By.cssSelector("[data-test-id='phone'] input")).sendKeys("");
+        driver.findElement(By.cssSelector("[data-test-id='agreement']")).click();
+        driver.findElement(By.cssSelector("button")).click();
+        WebElement resultElement = driver.findElement(By.cssSelector("[data-test-id='phone'] .input__inner .input__sub "));
+        assertEquals("Поле обязательно для заполнения", resultElement.getText().trim());
     }
 
 }
